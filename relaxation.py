@@ -5,6 +5,7 @@ Spyder Editor
 This is a temporary script file.
 """
 
+from matplotlib import pyplot as plt
 import numpy as np
 import brukerplot as bruk
 import nmrglue as ng
@@ -141,7 +142,7 @@ class relaxation(object):
     expects the data being pre-processed via rowext in Topsin 
     or euqivalent treatment prior to use
     
-    vdlists or vplists should be in seconds, no units just numbers
+    
     """
     
     
@@ -156,20 +157,39 @@ class relaxation(object):
     #----------------------------------
     
     
-#    def importvdlist(self,listtype='vdlist'):
-#        """"Import the VPlist or VDlist and handle stuff like 1m to seconds conversion
-#            work in progress
-#        """
-#        if listtype == 'vplist':
-#            self.inlist = np.loadtxt(self.path+'/'+str(self.expno)+'/vplist')
-#        if listtype == 'vdlist':
-#            self.inlist = np.loadtxt(self.path+'/'+str(self.expno)+'/vdlist')
-#        
-#        
-#        
-#        return self.list
+    def importvdlist(self,list_type='vd'):
+        """"Import the VPlist or VDlist and handle stuff like 1m to seconds conversion
+            work in progress
+        """
+        if list_type == 'vp':
+            self.file = open(self.path+'/'+str(self.expno)+'/vplist', 'r')
+            self.content = self.file.read()
+            self.content = self.content.replace('m','e-3')
+            self.content = self.content.replace('u','e-6')
+            self.content = self.content.replace('s','')
+            self.content = self.content.split()
+            self.list = np.array(self.content)
+            self.list = self.list.astype(float)
+
+        if list_type == 'vd':
+            self.file = open(self.path+'/'+str(self.expno)+'/vdlist', 'r')
+            self.content = self.file.read()
+            self.content = self.content.replace('m','e-3')
+            self.content = self.content.replace('u','e-6')
+            self.content = self.content.replace('s','')
+            self.content = self.content.split()
+            self.list = np.array(self.content)
+            self.list = self.list.astype(float)
+        return self.list
+    
+    
+    
+    
     def getnoise(self,dat,noise_reg=(400,200)):
-        
+        """"Caculates the noise number based on the algorithm stated in the Bruker Topspin manual
+            This is essentially the same as numpy.std(), which is why it will be replaced later on
+            only retained for backwards compatibility
+        """
         self.noiseidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
         self.noiseidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
   
@@ -187,6 +207,114 @@ class relaxation(object):
         self.gnoise = np.sqrt((self.y2noise - (self.ynoise**2 + 3*self.xynoise**2/(self.np_noise**2-1))/self.np_noise)/(self.np_noise-1))
         print(self.gnoise)
         return self.gnoise
+    
+    
+    
+    
+    def calcnoise(self,dat,noise_reg=(400,200)):
+        """"Caculates the noise number based on  numpy.std(), which is essentially the same as the Bruker thing
+        """
+        self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
+        self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
+        self.noise = np.std(dat[self.nidx0:self.nidx1])
+        return self.noise
+
+
+
+
+    def fit_pseudo2d(self,start_procno,peaklist,model,list_type='vd',fit_reg=(20,-10),use_sigma=False,noise_reg=(400,200),normalize=False,verbose=False,print_fits=False):
+        
+        self.sl_times = self.importvdlist(list_type)
+        self.n_peaks = len(peaklist)
+        self.npoints = len(self.sl_times)
+        self.sl_int = np.zeros((self.npoints,self.n_peaks))
+        self.sl_error = np.zeros((self.npoints,self.n_peaks))
+        
+        #define the fitting range
+                       
+        self.peaks = peaklist
+        self.n_peaks = len(peaklist)
+        self.integrals = np.zeros((self.npoints,self.n_peaks))
+        
+        ###############################################################################
+        
+        #----------------------------------
+        #Do the integration over all procnos
+        for n in range(self.npoints):
+            
+        #   load the data and find the spectral limits
+            self.spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
+            self.x, self.y = self.spectrum.plot1d()
+            self.xaxis = np.array(self.x)
+            self.idx0 = (np.abs(self.xaxis - fit_reg[0])).argmin()
+            self.idx1 = (np.abs(self.xaxis - fit_reg[1])).argmin()
+           
+            self.zerofilling_factor,self.sn_fac = self.spectrum.calc_zfratio()
+            
+        #    find the noise region and calculate the sigma of the noise
+        #    sigma of noise is used in the eventual fit as the error of each point
+            if use_sigma ==True:    
+                self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
+                self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
+                self.noise = np.std(self.y[self.nidx0:self.nidx1])
+                self.sigmas = np.zeros(self.idx1-self.idx0)
+                for k in range(len(self.sigmas)):
+                    self.sigmas[k]=self.noise
+                
+        #   Do the fit and save the results     
+            self.initguess = np.zeros(self.n_peaks)
+            self.initguess = self.initguess+100
+            if use_sigma == True:
+                self.peak_popt, self.peak_pcov = curve_fit(model,self.x[self.idx0:self.idx1],self.y[self.idx0:self.idx1],sigma=self.sigmas,absolute_sigma=True,p0=self.initguess,maxfev=5000)
+            else:
+                self.peak_popt, self.peak_pcov = curve_fit(model,self.x[self.idx0:self.idx1],self.y[self.idx0:self.idx1],p0=self.initguess,maxfev=5000)
+            self.peak_fitted = model(self.x[self.idx0:self.idx1],*self.peak_popt)
+            self.peak_residual = self.y[self.idx0:self.idx1]-self.peak_fitted
+            self.sl_error[n,:] = np.sqrt(np.diagonal(self.peak_pcov))/self.peak_popt
+            
+        #   Do the integration of the individual peaks
+        #   NOTE: the factors for zerofilling and sn_fac are empirical factors to account for differences in zerofilling
+            for k in range(self.n_peaks):
+                for p in range(self.idx1-self.idx0):
+                    self.integrals[n,k] = self.integrals[n,k] + self.peaks[k](self.x[self.idx0+p],self.peak_popt[k])/self.zerofilling_factor
+            self.sl_error[n,:] = self.sl_error[n,:]*self.integrals[n,:]*self.sn_fac
+        
+        
+        #   Some optional output to better track what is happening    
+            if verbose == True:
+                print('---------------')
+                print('--Integrals--')
+                for k in range(self.n_peaks):
+                    print(self.integrals[n,k])
+                print('---------------')
+        #   optional output of all the fits and spectra to track fitting
+            if print_fits == True:
+                fig = plt.figure()
+                plt.xlim(fit_reg)
+                if use_sigma == True:
+                    plt.errorbar(self.x[self.idx0:self.idx1],self.y[self.idx0:self.idx1],yerr=self.sigmas,label='exp')
+                else:
+                    plt.errorbar(self.x[self.idx0:self.idx1],self.y[self.idx0:self.idx1],label='exp')
+                plt.plot(self.x[self.idx0:self.idx1],self.peak_fitted,label='fit')
+                plt.plot(self.x[self.idx0:self.idx1],self.peak_residual,label='diff')
+                for k in range(self.n_peaks):
+                    plt.plot(self.x[self.idx0:self.idx1],self.peaks[k](self.x[self.idx0:self.idx1],self.peak_popt[k]))
+                plt.show()
+                
+        if normalize == True:
+            self.norm_integrals = np.zeros_like(self.integrals)
+            self.norm_sl_error = np.zeros_like(self.sl_error)
+            for k in range(self.n_peaks):
+                self.norm_integrals[:,k] = self.integrals[:,k]/self.integrals[:,k].max()*100
+                self.norm_sl_error[:,k] = self.sl_error[:,k]/self.integrals[:,k].max()*100
+            return self.sl_times, self.norm_integrals, self.norm_sl_error
+        #----------------------------------   
+        ###############################################################################
+        else:
+            print(self.sl_times)
+            return self.sl_times, self.integrals, self.sl_error
+
+
 
 
 
@@ -201,7 +329,7 @@ class relaxation(object):
         - normalize    :normalizes the data to 100
         """
         
-        self.vplist = np.loadtxt(self.path+'/'+str(self.expno)+'/vplist')
+        self.vplist = self.importvdlist(listtype='vplist')
         self.intensity = np.zeros(npoints)
         self.noise = np.zeros(npoints)
         self.sn = np.zeros(npoints)
@@ -250,7 +378,7 @@ class relaxation(object):
         - normalize    :normalizes the data to 100
         """
         
-        self.vplist = np.loadtxt(self.path+'/'+str(self.expno)+'/vplist')
+        self.vplist =  self.importvdlist(listtype='vplist')
         self.integral = np.zeros(npoints)
         #self.time = np.arange(0,self.vplist[-1],self.vplist[0])
         self.data = np.zeros((npoints,2))

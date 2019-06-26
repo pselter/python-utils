@@ -10,7 +10,6 @@ class bruker1d(object):
         self.pdata = ng.bruker.read_procs_file(path+'/'+str(expno)+'/pdata/'+str(procno))
         self.udic = ng.bruker.guess_udic(self.dic,self.data)
         self.uc = ng.fileiobase.uc_from_udic(self.udic, 0)
-
            
     def plot1d(self):
         self.xaxis = self.uc.ppm_scale()
@@ -59,6 +58,13 @@ class bruker1d(object):
             self.fig.savefig(name,dpi=300, format='png', bbox_inches='tight', pad_inches=0.1) 
         plt.close()
         return self.fig, self.ax
+    
+    def calc_zfratio(self):
+        self.tdeff = self.dic["procs"]["TDeff"]
+        self.si = self.dic["procs"]["SI"]
+        self.zf_fac = self.si/self.tdeff
+        self.sn_fac = np.sqrt(self.zf_fac)
+        return self.zf_fac , self.sn_fac
         	
 class bruker2d(object):
 	
