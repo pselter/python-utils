@@ -220,6 +220,68 @@ class relaxation(object):
         return self.noise
 
 
+    def int_pseudo2d(self,start_procno,region=(0,20),list_type='vd',noise_reg=(400,200),normalize=False,verbose=False,print_fits=False):
+        
+        self.region = np.array(region)
+        self.sl_times = self.importvdlist(list_type)
+        self.npoints = len(self.sl_times)
+        
+        self.sl_error = np.zeros((self.npoints))
+        
+        #define the fitting range
+                       
+
+        self.integrals = np.zeros((self.npoints))
+        
+        ###############################################################################
+        
+        #----------------------------------
+        #Do the integration over all procnos
+        for n in range(self.npoints):
+            
+        #   load the data and find the spectral limits
+            self.spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
+            self.x, self.y = self.spectrum.plot1d()
+            self.xaxis = np.array(self.x)
+            self.zerofilling_factor,self.sn_fac = self.spectrum.calc_zfratio()
+            
+            self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
+            self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
+            self.noise = np.std(self.y[self.nidx0:self.nidx1])
+            
+            
+            #Do the integration for every defined region
+            self.idx0 = (np.abs(self.xaxis - self.region[0])).argmin()
+            self.idx1 = (np.abs(self.xaxis - self.region[1])).argmin()
+            self.np_integral = self.idx1-self.idx0
+            for p in range(self.idx1-self.idx0):
+                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]
+#                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]/self.zerofilling_factor
+            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)
+#            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)*self.sn_fac
+
+        #   Some optional output to better track what is happening    
+            if verbose == True:
+                print('---------------')
+                print('--Integrals--')
+                for k in range(self.n_peaks):
+                    print(self.integrals[n,k])
+                print('---------------')
+
+        if normalize == True:
+            self.norm_integrals = np.zeros_like(self.integrals)
+            self.norm_sl_error = np.zeros_like(self.sl_error)
+            
+            self.norm_integrals[:] = self.integrals[:]/self.integrals[:].max()*100
+            self.norm_sl_error[:] = self.sl_error[:]/self.integrals[:].max()*100
+            return self.sl_times, self.norm_integrals, self.norm_sl_error
+        #----------------------------------   
+        ###############################################################################
+        else:
+            print(self.sl_times)
+            return self.sl_times, self.integrals, self.sl_error
+
+
 
 
     def fit_pseudo2d(self,start_procno,peaklist,model,list_type='vd',fit_reg=(20,-10),use_sigma=False,noise_reg=(400,200),normalize=False,verbose=False,print_fits=False):
