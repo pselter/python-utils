@@ -9,7 +9,9 @@ Created on Wed Aug 14 13:19:04 2019
 import numpy as np
 import matplotlib.pyplot as plt
 import spectrum as spec
-
+import sys
+sys.path.append('C:/Users/Selter/OneDrive/projects/python-utils')
+import brukerplot as bruk
 
 def RMS(dat,model):
     NP = len(dat)
@@ -206,9 +208,9 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
         if case == 'CH':
             
             #The CH case only depends on euler angles beta and gamma, therefore a simpler powder averaging can be used in this case
-            cryst_file = spec.BETA(N_angles,deg=False)
+            cryst_file = spec.BETA(N_angles,deg=False,verbose=False)
             n_cryst = len(cryst_file)
-            
+            zresult = 0
             ###################################################
             # Calculation for the CH case
             for k in range(n_cryst):
@@ -216,14 +218,20 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
                     current = INT_D_LF_zz_CH(time_axis,cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
                     cos = np.cos(np.deg2rad(current))
                     result = result + cos*cryst_file[k,1]/(n_cryst*g_angles)
+                    zero_current = INT_D_LF_zz_CH(0,cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zero_cos = np.cos(np.deg2rad(zero_current))
+                    zresult = zresult + zero_cos*cryst_file[k,1]/(n_cryst*g_angles)
             ###################################################
         
         elif case == 'CH2':
                 
-            cryst_file = spec.ZCW(N_angles,deg=False)
+            cryst_file = spec.ZCW(N_angles,deg=False,verbose=False)
             n_cryst = len(cryst_file)
             result1 = np.zeros(len(time_axis))
             result2 = np.zeros(len(time_axis))
+            zresult = 0
+            zresult1 = 0
+            zresult2 = 0
             ###################################################
             # Calculation for the CH2 case
             for k in range(n_cryst):
@@ -234,9 +242,16 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
                     cos2 = np.cos(np.deg2rad(phase_p)+np.deg2rad(phase_m))
                     result1 = result1 + cos1*cryst_file[k,2]/(n_cryst*g_angles)
                     result2 = result2 + cos2*cryst_file[k,2]/(n_cryst*g_angles)
+                    zphase_m = INT_D_LF_zz_CH2_m(0,cryst_file[k,0],cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zphase_p = INT_D_LF_zz_CH2_p(0,cryst_file[k,0],cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zcos1 = np.cos(np.deg2rad(zphase_p)-np.deg2rad(zphase_m))
+                    zcos2 = np.cos(np.deg2rad(zphase_p)+np.deg2rad(zphase_m))
+                    zresult1 = zresult1 + zcos1*cryst_file[k,2]/(n_cryst*g_angles)
+                    zresult2 = zresult2 + zcos2*cryst_file[k,2]/(n_cryst*g_angles)
             result = 0.5*result1+0.5*result2
+            zresult = 0.5*zresult1+0.5*zresult2
             ###################################################
-            
+                
         else:
              
             print('################################')
@@ -246,7 +261,7 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
             return
     
         if normalize == True:
-            result = result/np.max(result)
+            result = result/zresult
         
         if file == False:
             data = np.array([time_axis,result])
@@ -269,7 +284,7 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
             #The CH case only depends on euler angles beta and gamma, therefore a simpler powder averaging can be used in this case
             cryst_file = spec.BETA(N_angles,deg=False,verbose=False)
             n_cryst = len(cryst_file)
-            
+            zresult = 0
             ###################################################
             # Calculation for the CH case
             for k in range(n_cryst):
@@ -277,6 +292,9 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
                     current = INT_D_LF_zz_CH(time_axis,cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
                     cos = np.cos(np.deg2rad(current))
                     result = result + cos*cryst_file[k,1]/(n_cryst*g_angles)
+                    zero_current = INT_D_LF_zz_CH(0,cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zero_cos = np.cos(np.deg2rad(zero_current))
+                    zresult = zresult + zero_cos*cryst_file[k,1]/(n_cryst*g_angles)
             ###################################################
         
         elif case == 'CH2':
@@ -285,6 +303,9 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
             n_cryst = len(cryst_file)
             result1 = np.zeros(len(time_axis))
             result2 = np.zeros(len(time_axis))
+            zresult = 0
+            zresult1 = 0
+            zresult2 = 0
             ###################################################
             # Calculation for the CH2 case
             for k in range(n_cryst):
@@ -295,7 +316,14 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
                     cos2 = np.cos(np.deg2rad(phase_p)+np.deg2rad(phase_m))
                     result1 = result1 + cos1*cryst_file[k,2]/(n_cryst*g_angles)
                     result2 = result2 + cos2*cryst_file[k,2]/(n_cryst*g_angles)
+                    zphase_m = INT_D_LF_zz_CH2_m(0,cryst_file[k,0],cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zphase_p = INT_D_LF_zz_CH2_p(0,cryst_file[k,0],cryst_file[k,1],rad_c_list[i],d_CH,w_MAS)
+                    zcos1 = np.cos(np.deg2rad(zphase_p)-np.deg2rad(zphase_m))
+                    zcos2 = np.cos(np.deg2rad(zphase_p)+np.deg2rad(zphase_m))
+                    zresult1 = zresult1 + zcos1*cryst_file[k,2]/(n_cryst*g_angles)
+                    zresult2 = zresult2 + zcos2*cryst_file[k,2]/(n_cryst*g_angles)
             result = 0.5*result1+0.5*result2
+            zresult = 0.5*zresult1+0.5*zresult2
             ###################################################
             
         else:
@@ -306,7 +334,8 @@ def calc_curve(d_CH,MAS,t_axis,N_angles=5,g_angles=21,case='CH2',verbose=True,no
             return
     
         if normalize == True:
-            result = result/np.max(result)
+#            result = result/zresult
+            result = result/result.max()
         
         if file == False:
             data = np.array([time_axis,result])
@@ -329,13 +358,13 @@ def create_lib(dipoles,t_axis,v_MAS,N_angles=5,g_angles=21,case='CH'):
     return
 
 
-def compare_data(data,dipoles,MAS,t_axis,case='CH'):
+def compare_data(exp,dipoles,MAS,t_axis,case='CH'):
     rms_results = np.zeros((len(dipoles),2))
     for n in range(len(dipoles)):
   
-        data = np.loadtxt('DIPSHIFT_DD_'+str(dipoles[n])+'_Hz_MAS_'+str(v_MAS)+'_Hz_'+str(case)+'.dat')
+        sim = np.loadtxt('DIPSHIFT_DD_'+str(dipoles[n])+'_Hz_MAS_'+str(MAS)+'_Hz_'+str(case)+'.dat')
         rms_results[n,0] = dipoles[n]
-        rms_results[n,1] = RMS(exp,data[:,1])
+        rms_results[n,1] = RMS(exp,sim[:,1])
         
         
     
@@ -348,57 +377,160 @@ def compare_data(data,dipoles,MAS,t_axis,case='CH'):
 ##############################################################################################################################################
 
 
-
-
-
-#######################################################################
-# Experimental parameter:
-v_MAS = 10e3
-inc = 5e-6
-dipole= 16e3
-#######################################################################
-fig1 = plt.figure()
-noises = (0.01,0.02,0.03,0.04,0.05,0.075)
-dipoles = np.arange(0,20e3,0.2e3)
-
-
-
-
-create_lib(dipoles,inc,v_MAS,5,21,case='CH2')
-
-for n in noises:
-# generate noisy pseudo-data
-    data= calc_curve(dipole,v_MAS,inc,5,21,case='CH2',file=True)
-    print(len(data))
-        
-    noise_figure = n
+class dipshift(object):
+    """General Object to handle dipshift measurements by pseudo2D
     
-    noise = np.random.normal(0,noise_figure,len(data))
-    exp =data[:,1]+noise
-    rms = RMS(exp,data[:,1])
-    print(rms)
+    expects the data being pre-processed via rowext in Topsin 
+    or euqivalent treatment prior to use
+    
+    
+    """
+    
+    
+    #----------------------------------
+    def __init__(self, path, expno):
+        """"Initialize the class
+        
+        nothing fancy, yet
+        """
+        self.path = path
+        self.expno = expno
+    #----------------------------------
+    
+
+    def calcnoise(self,dat,noise_reg=(400,200)):
+        """"Caculates the noise number based on  numpy.std(), which is essentially the same as the Bruker thing
+        """
+        self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
+        self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
+        self.noise = np.std(dat[self.nidx0:self.nidx1])
+        return self.noise
+
+
+
+    def proc_pseudo2d(self,start_procno,npoints,region=(0,20),noise_reg=(400,200),normalize=False,method='integration'):
+            
+            self.region = np.array(region)
+            self.npoints = npoints
+            self.sl_error = np.zeros((self.npoints))
+            
+            #define the fitting range
+            self.integrals = np.zeros((self.npoints))
+            
+            ###############################################################################
+            
+            #----------------------------------
+            #Do the integration over all procnos
+            for n in range(self.npoints):
+                
+            #   load the data and find the spectral limits
+                self.spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
+                self.x, self.y = self.spectrum.plot1d()
+                self.xaxis = np.array(self.x)
+                self.zerofilling_factor,self.sn_fac = self.spectrum.calc_zfratio()
+                
+                
+                #check for the regions to be ordered correctly
+                if self.region[0] < self.region[1]:
+                    tmp = self.region[0]
+                    self.region[0] = self.region[1]
+                    self.region[1] = tmp
+                    
+                if noise_reg[0] < noise_reg[1]:
+                    tmp = noise_reg[0]
+                    noise_reg[0] = noise_reg[1]
+                    noise_reg[1] = tmp
+                
+                self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
+                self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
+                self.noise = np.std(self.y[self.nidx0:self.nidx1])
+                
+                
+                #Do the integration for every defined region
+                self.idx0 = (np.abs(self.xaxis - self.region[0])).argmin()
+                self.idx1 = (np.abs(self.xaxis - self.region[1])).argmin()
+                
+                
+                self.np_integral = self.idx1-self.idx0
+                if method == 'findmax':
+                    self.integrals[n] = self.y[self.idx0:self.idx1].max()
+                    self.sl_error[n] = self.noise
+                    
+                elif method == 'integration':
+                    for p in range(self.idx1-self.idx0):
+    #                    self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]
+                        self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]/self.zerofilling_factor
+                        self.sl_error[n] = self.noise*np.sqrt(self.np_integral)*self.sn_fac
+                else:
+                    print('Unknown/unsupported method')
+                    print('processing aborted')
+                    break
+                
    
-    rms_results = np.zeros((len(dipoles),2))
-    
-    for n in range(len(dipoles)):
-  
-        data = np.loadtxt('DIPSHIFT_DD_'+str(dipoles[n])+'_Hz_MAS_'+str(v_MAS)+'_Hz_CH2.dat')
-        rms_results[n,0] = dipoles[n]
-        rms_results[n,1] = RMS(exp,data[:,1])
-        
-        
-    
-    minidx = np.where(rms_results[:,1] == np.amin(rms_results[:,1]))
-    print(int(minidx[0]))
-    minidx=int(minidx[0])
-    
-    
-    
-    
-    plt.plot(rms_results[:,0],rms_results[:,1])
-    plt.errorbar(rms_results[minidx,0],rms_results[minidx,1],xerr=rms_results[minidx,1]*rms_results[minidx,0],fmt='o', color='tab:red', capsize=8, markersize=6,mfc='tab:red')
-plt.show()
 
+            if normalize == True:
+                self.norm_integrals = np.zeros_like(self.integrals)
+                self.norm_sl_error = np.zeros_like(self.sl_error)
+                
+                self.norm_integrals[:] = self.integrals[:]/self.integrals[:].max()*100
+                self.norm_sl_error[:] = self.sl_error[:]/self.integrals[:].max()*100
+                return self.norm_integrals, self.norm_sl_error
+            #----------------------------------   
+            ###############################################################################
+            else:
+                
+                return  self.integrals, self.sl_error
+    
+
+#
+########################################################################
+## Experimental parameter:
+#v_MAS = 10e3
+#inc = 5e-6
+#dipole= 16e3
+########################################################################
+#fig1 = plt.figure()
+#noises = (0.01,0.02,0.03,0.04,0.05,0.075)
+#dipoles = np.arange(0,20e3,0.2e3)
+#
+#
+#
+#
+#create_lib(dipoles,inc,v_MAS,5,21,case='CH2')
+#
+#for n in noises:
+## generate noisy pseudo-data
+#    data= calc_curve(dipole,v_MAS,inc,5,21,case='CH2',file=True)
+#    print(len(data))
+#        
+#    noise_figure = n
+#    
+#    noise = np.random.normal(0,noise_figure,len(data))
+#    exp =data[:,1]+noise
+#    rms = RMS(exp,data[:,1])
+#    print(rms)
+#   
+#    rms_results = np.zeros((len(dipoles),2))
+#    
+#    for n in range(len(dipoles)):
+#  
+#        data = np.loadtxt('DIPSHIFT_DD_'+str(dipoles[n])+'_Hz_MAS_'+str(v_MAS)+'_Hz_CH2.dat')
+#        rms_results[n,0] = dipoles[n]
+#        rms_results[n,1] = RMS(exp,data[:,1])
+#        
+#        
+#    
+#    minidx = np.where(rms_results[:,1] == np.amin(rms_results[:,1]))
+#    print(int(minidx[0]))
+#    minidx=int(minidx[0])
+#    
+#    
+#    
+#    
+#    plt.plot(rms_results[:,0],rms_results[:,1])
+#    plt.errorbar(rms_results[minidx,0],rms_results[minidx,1],xerr=rms_results[minidx,1]*rms_results[minidx,0],fmt='o', color='tab:red', capsize=8, markersize=6,mfc='tab:red')
+#plt.show()
+#
 
 
 

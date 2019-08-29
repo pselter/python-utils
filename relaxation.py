@@ -220,7 +220,7 @@ class relaxation(object):
         return self.noise
 
 
-    def int_pseudo2d(self,start_procno,region=(0,20),list_type='vd',noise_reg=(400,200),normalize=False,verbose=False,print_fits=False):
+    def int_pseudo2d(self,start_procno,region=(0,20),list_type='vd',noise_reg=(400,200),normalize=False):
         
         self.region = np.array(region)
         self.sl_times = self.importvdlist(list_type)
@@ -245,6 +245,20 @@ class relaxation(object):
             self.xaxis = np.array(self.x)
             self.zerofilling_factor,self.sn_fac = self.spectrum.calc_zfratio()
             
+            
+            #check for the regions to be ordered correctly
+            if self.region[0] < self.region[1]:
+                tmp = self.region[0]
+                self.region[0] = self.region[1]
+                self.region[1] = tmp
+                
+            if noise_reg[0] < noise_reg[1]:
+                tmp = noise_reg[0]
+                noise_reg[0] = noise_reg[1]
+                noise_reg[1] = tmp
+            
+            
+            
             self.nidx0 = (np.abs(self.xaxis - noise_reg[0])).argmin()
             self.nidx1 = (np.abs(self.xaxis - noise_reg[1])).argmin()
             self.noise = np.std(self.y[self.nidx0:self.nidx1])
@@ -253,6 +267,7 @@ class relaxation(object):
             #Do the integration for every defined region
             self.idx0 = (np.abs(self.xaxis - self.region[0])).argmin()
             self.idx1 = (np.abs(self.xaxis - self.region[1])).argmin()
+            
             self.np_integral = self.idx1-self.idx0
             for p in range(self.idx1-self.idx0):
                 self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]
@@ -260,13 +275,6 @@ class relaxation(object):
             self.sl_error[n] = self.noise*np.sqrt(self.np_integral)
 #            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)*self.sn_fac
 
-        #   Some optional output to better track what is happening    
-            if verbose == True:
-                print('---------------')
-                print('--Integrals--')
-                for k in range(self.n_peaks):
-                    print(self.integrals[n,k])
-                print('---------------')
 
         if normalize == True:
             self.norm_integrals = np.zeros_like(self.integrals)
@@ -377,100 +385,100 @@ class relaxation(object):
             return self.sl_times, self.integrals, self.sl_error
 
 
+###############################################################################
+#    not sure if these actually work at this point
 
-
-
-    def T1rho2(self,start_procno,npoints,region=(20,-10),noise_reg=(400,200), normalize=True):
-        """Function to do the integration, returns the integral and time in an array         
-        written with T1_rho measurements by spin-locking in mind
-        
-        assumes a vplist being present
-        - start_procno :the first procno with slices
-        - npoints      :the number of procnos to evaluate
-        - region       :the region to integrate in ppm
-        - normalize    :normalizes the data to 100
-        """
-        
-        self.vplist = self.importvdlist(listtype='vplist')
-        self.intensity = np.zeros(npoints)
-        self.noise = np.zeros(npoints)
-        self.sn = np.zeros(npoints)
-        self.data = np.zeros((npoints,3))
-
-        
-        #----------------------------------
-        #Do the integration over all procnos
-        for n in range(npoints):
-            spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
-            self.x, self.y = spectrum.plot1d()
-            self.xaxis = np.array(self.x)
-            
-            
-            self.idx0 = (np.abs(self.xaxis - region[0])).argmin()
-            self.idx1 = (np.abs(self.xaxis - region[1])).argmin()
-            self.intensity[n] = np.amax(self.y[self.idx0:self.idx1])
-            self.noise[n]=self.getnoise(self.y)
-            self.sn[n]=self.intensity[n]/(2*self.noise[n])
-        #----------------------------------
-        
-        #----------------------------------
-        # Check for normalization
-        if normalize == True:
-            self.norm_int = self.intensity/self.intensity.max()*100
-            self.data[:,0] = self.vplist
-            self.data[:,1] = self.norm_int
-            self.data[:,2] = 1/self.sn
-        else:
-            self.data[:,0] = self.vplist
-            self.data[:,1] = self.intensity
-            self.data[:,2] = 1/self.sn
-        #----------------------------------
-        return self.data
-
-
-    
-    def T1rho(self,start_procno,npoints,region=(20,-10), normalize=True):
-        """Function to do the integration, returns the integral and time in an array         
-        written with T1_rho measurements by spin-locking in mind
-        
-        assumes a vplist being present
-        - start_procno :the first procno with slices
-        - npoints      :the number of procnos to evaluate
-        - region       :the region to integrate in ppm
-        - normalize    :normalizes the data to 100
-        """
-        
-        self.vplist =  self.importvdlist(listtype='vplist')
-        self.integral = np.zeros(npoints)
-        #self.time = np.arange(0,self.vplist[-1],self.vplist[0])
-        self.data = np.zeros((npoints,2))
-        #self.res = np.zeros((npoints,2))
-        #self.fit =  np.zeros((len(self.time),2))
-        
-        #----------------------------------
-        #Do the integration over all procnos
-        for n in range(npoints):
-            spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
-            self.x, self.y = spectrum.plot1d()
-            self.xaxis = np.array(self.x)
-            self.idx0 = (np.abs(self.xaxis - region[0])).argmin()
-            self.idx1 = (np.abs(self.xaxis - region[1])).argmin()
-            for l in range(self.idx1-self.idx0):
-                self.integral[n] += self.y[self.idx0+l]
-        #----------------------------------
-        
-        #----------------------------------
-        # Check for normalization
-        if normalize == True:
-            self.norm_int = self.integral/self.integral.max()*100
-            print(self.vplist)
-            self.data[:,0] = self.vplist
-            self.data[:,1] = self.norm_int
-        else:
-            self.data[:,0] = self.vplist
-            self.data[:,1] = self.integral
-        #----------------------------------
-        return self.data
+#    def T1rho2(self,start_procno,npoints,region=(20,-10),noise_reg=(400,200), normalize=True):
+#        """Function to do the integration, returns the integral and time in an array         
+#        written with T1_rho measurements by spin-locking in mind
+#        
+#        assumes a vplist being present
+#        - start_procno :the first procno with slices
+#        - npoints      :the number of procnos to evaluate
+#        - region       :the region to integrate in ppm
+#        - normalize    :normalizes the data to 100
+#        """
+#        
+#        self.vplist = self.importvdlist(list_type='vp')
+#        self.intensity = np.zeros(npoints)
+#        self.noise = np.zeros(npoints)
+#        self.sn = np.zeros(npoints)
+#        self.data = np.zeros((npoints,3))
+#
+#        
+#        #----------------------------------
+#        #Do the integration over all procnos
+#        for n in range(npoints):
+#            spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
+#            self.x, self.y = spectrum.plot1d()
+#            self.xaxis = np.array(self.x)
+#            
+#            
+#            self.idx0 = (np.abs(self.xaxis - region[0])).argmin()
+#            self.idx1 = (np.abs(self.xaxis - region[1])).argmin()
+#            self.intensity[n] = np.amax(self.y[self.idx0:self.idx1])
+#            self.noise[n]=self.getnoise(self.y)
+#            self.sn[n]=self.intensity[n]/(2*self.noise[n])
+#        #----------------------------------
+#        
+#        #----------------------------------
+#        # Check for normalization
+#        if normalize == True:
+#            self.norm_int = self.intensity/self.intensity.max()*100
+#            self.data[:,0] = self.vplist
+#            self.data[:,1] = self.norm_int
+#            self.data[:,2] = 1/self.sn
+#        else:
+#            self.data[:,0] = self.vplist
+#            self.data[:,1] = self.intensity
+#            self.data[:,2] = 1/self.sn
+#        #----------------------------------
+#        return self.data
+#
+#
+#    
+#    def T1rho(self,start_procno,npoints,region=(20,-10), normalize=True):
+#        """Function to do the integration, returns the integral and time in an array         
+#        written with T1_rho measurements by spin-locking in mind
+#        
+#        assumes a vplist being present
+#        - start_procno :the first procno with slices
+#        - npoints      :the number of procnos to evaluate
+#        - region       :the region to integrate in ppm
+#        - normalize    :normalizes the data to 100
+#        """
+#        
+#        self.vplist =  self.importvdlist(list_type='vp')
+#        self.integral = np.zeros(npoints)
+#        #self.time = np.arange(0,self.vplist[-1],self.vplist[0])
+#        self.data = np.zeros((npoints,2))
+#        #self.res = np.zeros((npoints,2))
+#        #self.fit =  np.zeros((len(self.time),2))
+#        
+#        #----------------------------------
+#        #Do the integration over all procnos
+#        for n in range(npoints):
+#            spectrum = bruk.bruker1d(self.path,self.expno,procno=start_procno+n)
+#            self.x, self.y = spectrum.plot1d()
+#            self.xaxis = np.array(self.x)
+#            self.idx0 = (np.abs(self.xaxis - region[0])).argmin()
+#            self.idx1 = (np.abs(self.xaxis - region[1])).argmin()
+#            for l in range(self.idx1-self.idx0):
+#                self.integral[n] += self.y[self.idx0+l]
+#        #----------------------------------
+#        
+#        #----------------------------------
+#        # Check for normalization
+#        if normalize == True:
+#            self.norm_int = self.integral/self.integral.max()*100
+#            print(self.vplist)
+#            self.data[:,0] = self.vplist
+#            self.data[:,1] = self.norm_int
+#        else:
+#            self.data[:,0] = self.vplist
+#            self.data[:,1] = self.integral
+#        #----------------------------------
+#        return self.data
 
 
     def T1_satrec(self,start_procno,npoints,region=(20,-10), normalize=True):
