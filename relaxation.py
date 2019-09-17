@@ -270,10 +270,10 @@ class relaxation(object):
             
             self.np_integral = self.idx1-self.idx0
             for p in range(self.idx1-self.idx0):
-                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]
-#                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]/self.zerofilling_factor
-            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)
-#            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)*self.sn_fac
+#                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]
+                self.integrals[n] = self.integrals[n] + self.y[self.idx0+p]/self.zerofilling_factor
+#            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)
+            self.sl_error[n] = self.noise*np.sqrt(self.np_integral)*self.sn_fac
 
 
         if normalize == True:

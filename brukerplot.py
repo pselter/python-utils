@@ -63,7 +63,7 @@ class bruker1d(object):
         self.tdeff = self.dic["procs"]["TDeff"]
         self.si = self.dic["procs"]["SI"]
         self.zf_fac = self.si/self.tdeff
-        self.sn_fac = np.sqrt(self.zf_fac)
+        self.sn_fac = np.sqrt(1/self.zf_fac)
         return self.zf_fac , self.sn_fac
         	
 class bruker2d(object):
