@@ -116,7 +116,7 @@ class bruker2d(object):
     def def_contours2(self,zoom=1.0, mult=1.8, n_pos_levels=8, n_neg_levels=8):
 	
 		#contours, do not mess with this
-
+        print(self.data.std())
         cl = ( zoom * mult ** np.arange(n_pos_levels))
         cl2 = ( (-1.0*zoom) * mult ** np.arange(n_neg_levels))
         cl3 = cl2[::-1]
