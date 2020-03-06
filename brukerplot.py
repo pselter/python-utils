@@ -116,7 +116,7 @@ class bruker2d(object):
     def def_contours2(self,zoom=1.0, mult=1.8, n_pos_levels=8, n_neg_levels=8):
 	
 		#contours, do not mess with this
-        print(self.data.std())
+        # print(self.data.std())
         cl = ( zoom * mult ** np.arange(n_pos_levels))
         cl2 = ( (-1.0*zoom) * mult ** np.arange(n_neg_levels))
         cl3 = cl2[::-1]
@@ -163,11 +163,15 @@ class bruker2d(object):
 
 
     def proj_1_2(self, start, stop):	
-		
+        # if start < stop :
+        #     store = start
+        #     start = stop
+        #     stop = store
+            
         self.proj_1_scale = self.uc1.ppm_scale()
         self.proj_1_data = np.arange(0,len(self.data[0,0:]),1)
-		
-      
+        print(self.uc0(str(start)+' ppm'))
+        print(self.uc0(str(stop)+' ppm'))
 		
         for k in self.proj_1_data:
             test = sum(x for x in self.data[self.uc0(str(start)+' ppm'):self.uc0(str(stop)+' ppm'),k] if x > 0)
@@ -175,6 +179,8 @@ class bruker2d(object):
             
         self.normproj1 = self.proj_1_data
         self.nproj1 = np.array(self.normproj1)
+        # print(self.nproj1)
+        
         self.normproj12 = self.nproj1/self.nproj1.max()*100
         
         return self.proj_1_scale, self.normproj12

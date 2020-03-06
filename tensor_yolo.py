@@ -104,6 +104,8 @@ def plot_CSA_axes(ax, tensor, center, color='red',alpha=0.8,zorder=0,normalize=T
     U, V, W = zip(q0,q1,q2)
     U2, V2, W2 = zip(p0,p1,p2)  
     
+    print('yolo this is')
+    print(W)
 #    for n in range(3):
 #        ax.plot((U[n],center[n]),(V[n],center[n]),(W[n],center[n]),color='black',alpha=0.2)
 #        print((U[n],center[n]))
@@ -194,32 +196,32 @@ print(average_plot)
 #
 
 
-################################
+###############################
 # plot for standard tensor
-################
-#fig = plt.figure(figsize=(10., 10.),facecolor=None, frameon=False)
-#ax = fig.add_subplot(111, projection='3d')
-#ax = plt.gca(projection='3d')
-#ax._axis3don = False
-#
-#plot_CSA_axes(ax,sigma,center0,normalize=False,color='blue')
-#plot_CSA_ellipsoid(ax,sigma,center0,color='blue')
-#print(sigma)
-#
-#ax.set_xlim(-1, 1)
-#ax.set_ylim(1, -1)
-#ax.set_zlim(-1,1)
-#ax.set_aspect('equal')
-#fig.tight_layout()
-#ax.view_init(20, 300)
-##for angle in range(0, 360):
-##    ax.view_init(30, angle)
-##    plt.draw()
-##    plt.pause(.001)
-#plt.show()
+###############
+fig = plt.figure(figsize=(10., 10.),facecolor=None, frameon=False)
+ax = fig.add_subplot(111, projection='3d')
+ax = plt.gca(projection='3d')
+ax._axis3don = False
+
+plot_CSA_axes(ax,sigma,center0,normalize=False,color='blue')
+plot_CSA_ellipsoid(ax,sigma,center0,color='blue')
+print(sigma)
+
+ax.set_xlim(-1, 1)
+ax.set_ylim(1, -1)
+ax.set_zlim(-1,1)
+ax.set_aspect('equal')
+fig.tight_layout()
+ax.view_init(20, 300)
+#for angle in range(0, 360):
+#    ax.view_init(30, angle)
+#    plt.draw()
+#    plt.pause(.001)
+plt.show()
 #fig.savefig("Tensor_test4.png",dpi=300, format='png', bbox_inches='tight', pad_inches=0.1) 
-#plt.close()
-##################################
+plt.close()
+#################################
 
 
 ##################################

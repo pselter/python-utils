@@ -7,7 +7,7 @@ Created on Wed Aug 14 13:19:04 2019
 
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import spectrum as spec
 import sys
 sys.path.append('C:/Users/Selter/OneDrive/projects/python-utils')

@@ -56,34 +56,26 @@ def a_rot(vec,axis,angle):
 #################################
 #################################
 
-####in which frame of reference do you want this calculation:
-case = 'rotframe'
-#case = 'freqmodframe'
-
-
-### strength frequency sweep 
-f_start =  0.5
-f_end   = -0.5
-
-### Relative strength of the B1 field
-b1_nutation = 0.025
-
-### Amplitude factor for shape
-N = 80
-
-## b1_nutation = 0.025 excitation
-## b1_nutation = 0.1   inversion 
-#################################
+####in which frame do you want this calculation:
+#case = 'rotframe'
+case = 'freqmodframe'
 
 #time axis
 t_start = 0
-t_stop = 200
-t_points = 5000
+t_stop = 100
+t_points = 1000
 
 ### magnetization vector: x,y,z,time
-start_vec = np.array([0.0,0.0,-1,0])
-b1_vec = np.array([1,0,0])
+start_vec = np.array([1.0,0,0,0])
+b1_vec = np.array([0,-1,0])
 ofs_vec = np.array([0,0,1])
+
+### frequency sweep
+f_start =0.1
+f_end = 0.0999
+
+b1_nutation =0.1414
+N = 100
 
 time = np.linspace(t_start,t_stop,t_points)
 t_step = (t_stop-t_start)/t_points
@@ -93,11 +85,13 @@ f_step = f_diff/len(time)
 freq = np.zeros(len(time))
 for n in range(0,len(freq)):
     freq[n]=f_start+n*f_step
+    
+
 
 #################################
 #### calculate the frequency ramp    
-#amp = b1_nutation*1.0+time*0.0
-amp = b1_nutation*(1-np.abs(np.cos((np.pi*time)/(t_stop-t_start))**N))
+amp = b1_nutation*1.0+time*0.0
+#amp = b1_nutation*(1-np.abs(np.cos((np.pi*time)/(t_stop-t_start))**N))
 #################################
 
 print('freq rate is: '+str(f_step/t_step))
@@ -167,6 +161,17 @@ ax = fig.add_subplot(111, projection='3d')
 ax.scatter(xx,yy,zz,c=tt,s=10,cmap='plasma')
 #ax.scatter(xxx,yyy,zzz,c=ttt,s=10,cmap='seismic')
 
+sum1=np.sum(xx)/len(xx)
+sum2=np.sum(yy)/len(yy)
+sum3=np.sum(zz)/len(zz)
+print(sum1)
+print(sum2)
+print(sum3)
+
+ax.quiver((0),(0),(0),(b1_vec[0]),(b1_vec[1]),(b1_vec[2]))
+ax.quiver((0,0,0),(0,0,0),(0,0,0),(1,0,0),(0,1,0),(0,0,1),color=('red','k','b'))
+ax.quiver((0),(0),(0),(sum1),(sum2),(sum3))
+
 ax.set_xlim([-1,1])
 ax.set_ylim([-1,1])
 ax.set_zlim([-1,1])
@@ -183,9 +188,7 @@ plt.plot(time,mag_vec[:,2],label='z mag')
 plt.plot(time,mag_vec[:,1],label='y mag')
 plt.plot(time,mag_vec[:,0],label='x mag')
 plt.legend()
-#plt.plot(time,arcos_vec[:,2])
-#plt.plot(time,theta)
-#plt.plot(time,ratio)
+
 plt.ylim(-1,1)
 plt.show()
 
