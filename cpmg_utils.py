@@ -10,9 +10,28 @@ import nmrglue as ng
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft,ifft
 from scipy.fftpack import fftshift
+import scipy.signal
 import math
 
 def create_lorentzian(npoints=100,width=10,center=50):
+    """
+    Creates the lorentzian window function
+
+    Parameters
+    ----------
+    npoints : INTEGER, optional
+        DESCRIPTION. The default is 100.
+    width : INTEGER, optional
+        DESCRIPTION. The default is 10.
+    center : INTEGER, optional
+        DESCRIPTION. The default is 50.
+
+    Returns
+    -------
+    out : TYPE
+        DESCRIPTION.
+
+    """
     points = np.arange(npoints)
     x = (center-points)/(width/2)
     out = 1/(1+x**2)
@@ -24,6 +43,17 @@ def create_rectangle(npoints=100,width=10,center=50):
     for n in range(int(center-width*0.5),int(center+width*0.5),1):
         out[n]=1.0
     
+    return out
+
+def create_cheby(npoints=100,width=30,center=50):
+    
+    window = scipy.signal.chebwin(width,100,sym=True)
+    print(len(window))
+    front = np.zeros(center-int(width*0.5))
+    print(len(front))
+    end = np.zeros(npoints-int(width)-len(front))
+    print(len(end))
+    out= np.concatenate((front, window, end))
     return out
 
 def create_sinc(npoints=100,width=10,center=50):

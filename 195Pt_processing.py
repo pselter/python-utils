@@ -18,7 +18,9 @@ path = 'C:/Users/Selter/OneDrive/old_sciebo_share/NMR-Rohdaten/NMR300/p_selt01/n
 # define the gaussian bell
 # gauss = cpmg.create_gauss(npoints=402,width=2,center=150)
 # gauss = cpmg.create_lorentzian(npoints=402,width=5,center=170)
-gauss = cpmg.create_rectangle(npoints=402,width=100,center=170)
+# gauss = cpmg.create_rectangle(npoints=402,width=100,center=170)
+gauss = cpmg.create_cheby(npoints=402,width=160,center=170)
+print(len(gauss))
 # gauss = cpmg.create_sinc(npoints=402,width=50,center=170)
 # concatenated the gaussian bells
 multigauss = cpmg.create_rp_wdw(0,gauss,150,0)
@@ -36,7 +38,7 @@ fig = plt.figure()
 plt.plot(data/data.max()*0.5)
 plt.plot(multigauss)
 plt.plot(data2/data2.max()*0.5)
-plt.xlim(0,300)
+# plt.xlim(0,300)
 plt.show()
 
 
@@ -49,7 +51,7 @@ plt.show()
 fig = plt.figure()
 sumtest = np.zeros(64*1024)
 for k in range(0,200,2):
-    gauss = cpmg.create_rectangle(npoints=402,width=50,center=75+k)
+    gauss = cpmg.create_cheby(npoints=402,width=150,center=75+k)
     # gauss = cpmg.create_sinc(npoints=402,width=10,center=75+k)
     # concatenated the gaussian bells
     multigauss = cpmg.create_rp_wdw(0,gauss,150,0)
