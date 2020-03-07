@@ -12,8 +12,39 @@ from scipy.fftpack import fft,ifft
 from scipy.fftpack import fftshift
 import math
 
-def create_sinc(npoints=100,width=10,center=50):
+def create_lorentzian(npoints=100,width=10,center=50):
+    points = np.arange(npoints)
+    x = (center-points)/(width/2)
+    out = 1/(1+x**2)
+    return out
+
+def create_rectangle(npoints=100,width=10,center=50):
+    points = np.arange(npoints)
+    out = np.zeros(npoints)
+    for n in range(int(center-width*0.5),int(center+width*0.5),1):
+        out[n]=1.0
     
+    return out
+
+def create_sinc(npoints=100,width=10,center=50):
+    """
+    Creates the sinc window function
+    
+    Parameters
+    ----------
+    npoints : INTEGER, optional
+        number of points in the window. The default is 100.
+    width : INTEGER, optional
+        width of the window, higher values correspond to narrower window. The default is 10.
+    center : INTEGER, optional
+        center point of the window. The default is 50.
+
+    Returns
+    -------
+    out : list of floats
+        returns a window function,
+
+    """
     points = np.arange(npoints)
     out = np.zeros(npoints)
     for n in points:
