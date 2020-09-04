@@ -62,11 +62,11 @@ case = 'rotframe'
 
 
 ### strength frequency sweep 
-f_start =  0.5
-f_end   = -0.5
+f_start =  0.2
+f_end   = -0.2
 
 ### Relative strength of the B1 field
-b1_nutation = 0.025
+b1_nutation = 0.001
 
 ### Amplitude factor for shape
 N = 80
@@ -77,12 +77,12 @@ N = 80
 
 #time axis
 t_start = 0
-t_stop = 200
+t_stop = 300
 t_points = 5000
 
 ### magnetization vector: x,y,z,time
-start_vec = np.array([0.0,0.0,-1,0])
-b1_vec = np.array([1,0,0])
+start_vec = np.array([0.0,0.0,1,0])
+b1_vec = np.array([0,-1,0])
 ofs_vec = np.array([0,0,1])
 
 time = np.linspace(t_start,t_stop,t_points)
@@ -161,16 +161,30 @@ zzz =  arcos_vec[:,2]
 ttt =  arcos_vec[:,3]
 
 #Set colours and render
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure(dpi=150,figsize=(4,4))
+ax = plt.axes(projection='3d')
 
-ax.scatter(xx,yy,zz,c=tt,s=10,cmap='plasma')
+
+
+
+
+plotter = ax.scatter3D(xx,yy,zz,c=tt,zdir='z',s=10,cmap='plasma',zorder=10)
 #ax.scatter(xxx,yyy,zzz,c=ttt,s=10,cmap='seismic')
+
+
+# draw sphere
+ua, va = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
+xa = np.cos(ua)*np.sin(va)
+ya = np.sin(ua)*np.sin(va)
+za = np.cos(va)
+ax.plot_wireframe(xa, ya, za, color="k",linewidth=0.5,alpha=0.5)
+# ax.set_axisbelow(True)
+
 
 ax.set_xlim([-1,1])
 ax.set_ylim([-1,1])
 ax.set_zlim([-1,1])
-ax.set_aspect("equal")
+# ax.set_aspect("equal")
 plt.tight_layout()
 plt.show()
 

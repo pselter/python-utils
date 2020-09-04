@@ -69,7 +69,7 @@ class bruker1d(object):
 class bruker2d(object):
 	
 	
-    def __init__(self, path, expno=1, procno=1):
+    def __init__(self, path, expno=1, procno=1,normalize=False):
 	
         self.dic, self.data = ng.bruker.read_pdata(path+'/'+str(expno)+'/pdata/'+str(procno))
         self.pdata = ng.bruker.read_procs_file(path+'/'+str(expno)+'/pdata/'+str(procno))
@@ -77,6 +77,12 @@ class bruker2d(object):
         self.uc0 = ng.fileiobase.uc_from_udic(self.udic, 0)
         self.uc1 = ng.fileiobase.uc_from_udic(self.udic, 1)
         #print('bruker object created')
+        
+        if normalize ==True:
+            self.normdata = self.data
+            self.ndata = np.array(self.normdata)
+            self.normdata2 = self.ndata/self.ndata.max()*100
+            self.data = self.normdata2
 		
     def plot2d(self):
         x_values = self.uc1.ppm_scale()

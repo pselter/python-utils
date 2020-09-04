@@ -175,7 +175,7 @@ ax.quiver((0),(0),(0),(sum1),(sum2),(sum3))
 ax.set_xlim([-1,1])
 ax.set_ylim([-1,1])
 ax.set_zlim([-1,1])
-ax.set_aspect("equal")
+# ax.set_aspect("equal")
 plt.tight_layout()
 plt.show()
 
